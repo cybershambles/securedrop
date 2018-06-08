@@ -29,9 +29,8 @@ from db import db
 LOGIN_HARDENING = True
 if os.environ.get('SECUREDROP_ENV') == 'test':
     LOGIN_HARDENING = False
-    ARGON2_PARAMS = dict(memory_cost=2**3, rounds=1, parallelism=1)
-else:
-    ARGON2_PARAMS = dict(memory_cost=2**16, rounds=4, parallelism=2)
+
+ARGON2_PARAMS = dict(memory_cost=2**16, rounds=4, parallelism=2)
 
 
 def get_one_or_else(query, logger, failure_method):
@@ -276,6 +275,8 @@ class Journalist(db.Model):
         if not self.passphrase_hash:
             self.passphrase_hash = \
                 argon2.using(**ARGON2_PARAMS).hash(passphrase)
+            # passlib creates one merged field that embeds randomly generated
+            # salt in the output like $alg$salt$hash
             self.pw_hash = None
             self.pw_salt = None
 
