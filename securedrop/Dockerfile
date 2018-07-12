@@ -9,7 +9,8 @@ RUN apt-get update && \
     apt-get install -y devscripts \
                        python-pip libpython2.7-dev libssl-dev secure-delete \
                        gnupg2 ruby redis-server firefox git xvfb haveged curl \
-                       gettext paxctl x11vnc enchant libffi-dev sqlite3
+                       gettext paxctl x11vnc enchant libffi-dev sqlite3 wget \
+                       libasound2 libdbus-glib-1-2 libgtk2.0-0 libfontconfig1 libxrender1
 
 RUN gem install sass -v 3.4.23
 
@@ -19,6 +20,27 @@ RUN curl -LO https://launchpad.net/~ubuntu-mozilla-security/+archive/ubuntu/ppa/
     echo "${FIREFOX_CHECKSUM}  firefox_46.0.1+build1-0ubuntu0.14.04.3_amd64.deb" | shasum -a 256 -c - && \
     dpkg -i firefox*deb && apt-get install -f && \
     paxctl -cm /usr/lib/firefox/firefox
+
+
+COPY ./tor_project_public.pub /opt/
+
+RUN gpg --import /opt/tor_project_public.pub && \
+    wget  https://www.torproject.org/dist/torbrowser/7.5.6/tor-browser-linux64-7.5.6_en-US.tar.xz && \
+    wget https://www.torproject.org/dist/torbrowser/7.5.6/tor-browser-linux64-7.5.6_en-US.tar.xz.asc && \
+    gpg --verify tor-browser-linux64-7.5.6_en-US.tar.xz.asc tor-browser-linux64-7.5.6_en-US.tar.xz
+
+RUN tar -xvJf tor-browser-linux64-7.5.6_en-US.tar.xz && \
+    mkdir -p /root/.local/tbb && mv tor-browser_en-US /root/.local/tbb &&\
+    paxctl -cm /root/.local/tbb/tor-browser_en-US/Browser/firefox && \
+    paxctl -cm /root/.local/tbb/tor-browser_en-US/Browser/plugin-container
+
+ENV GECKODRIVER_CHECKSUM=3154274c050d724eb2f4e8986a58ed37c0138b48304692bf7eeed827a5e82319
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.17.0/geckodriver-v0.17.0-linux64.tar.gz && \
+    shasum -a 256 geckodriver*tar.gz && \
+    echo "${GECKODRIVER_CHECKSUM}  geckodriver-v0.17.0-linux64.tar.gz" | shasum -a 256 -c - && \
+    tar -zxvf geckodriver*tar.gz && chmod +x geckodriver && mv geckodriver /bin && \
+    paxctl -cm /bin/geckodriver
+
 
 #
 # This can be removed when upgrading to something more recent than trusty
