@@ -7,6 +7,14 @@
     dest: /root/
   with_items: "{{ local_deb_packages }}"
 
+- name: Install SecureDrop Application Server dependencies.
+  apt:
+    pkg: "{{ item }}"
+    state: latest
+  with_items: "{{ appserver_dependencies }}"
+  tags:
+    - apt
+
 # Using a two-pass approach for installing local deb packages.
 # The first pass uses `apt`, which will intelligently resolve dependencies;
 # a useful attribute, particular for the initial provisioning run. On subsequent
